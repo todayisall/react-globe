@@ -1,84 +1,109 @@
 import { Component } from "react";
 import * as THREE from "three";
-import * as Stats from "stats.js";
+
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { buildGlobe } from "../utils/utils";
+import { circleInstance, getCoordinates, getMesh } from "./instancing.js";
+
 class Globe extends Component {
+  constructor() {
+    super();
+    this.canvas = null;
+    this.continents = null;
+    this.points = null; // coordinates of continents except for artic & antarctic
+    this.spikes = []; // array of tower & top
+    this.curves = [];
+    this.circles = [];
+  }
   componentDidMount() {
-    this.initUI();
+    this.init();
   }
 
-  initUI() {
-    let stats;
-    let camera, scene, renderer;
-    let group;
-    let container = document.getElementById("WebGL-output");
-    let width = container.clientWidth,
-      height = container.clientHeight;
+  init() {
+    console.log("init");
+    this.canvas = document.querySelector(".globe");
 
-    init();
-    animate();
+    this.scene = new THREE.Scene();
+    this.scene.background = new THREE.Color(0x000000);
 
-    function init() {
-      scene = new THREE.Scene();
-      group = new THREE.Group();
-      scene.add(group);
+    // 相机设置
+    this.camera = new THREE.PerspectiveCamera(
+      45,
+      this.canvas.offsetWidth / this.canvas.offsetHeight,
+      0.1,
+      1000
+    );
+    this.camera.position.set(0, 0.5, 90);
+    this.scene.add(this.camera);
 
-      camera = new THREE.PerspectiveCamera(60, width / height, 1, 2000);
-      camera.position.x = -10;
-      camera.position.y = 15;
-      camera.position.z = 500;
-      camera.lookAt(scene.position);
+    // 点光源
+    var pointLight = new THREE.PointLight(0xffffff, 1);
+    pointLight.position.set(-300, 500, 0);
+    this.camera.add(pointLight);
 
-      //光源
-      let ambi = new THREE.AmbientLight(0x686868);
-      scene.add(ambi);
+    // 半球光
+    var hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.4);
+    this.scene.add(hemiLight);
 
-      let spotLight = new THREE.DirectionalLight(0xffffff);
-      spotLight.position.set(550, 100, 550);
-      spotLight.intensity = 0.6;
+    // 渲染器
+    this.renderer = new THREE.WebGLRenderer();
+    const DPR = window.devicePixelRatio ? window.devicePixelRatio : 1;
+    this.renderer.setPixelRatio(DPR);
+    this.renderer.setSize(this.canvas.offsetWidth, this.canvas.offsetHeight);
+    this.renderer.shadowMap.enabled = true;
+    this.canvas.appendChild(this.renderer.domElement);
 
-      scene.add(spotLight);
-      // Texture
-      let loader = new THREE.TextureLoader();
-      let planetTexture = require("../assets/images/map.png");
+    // 控制器
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    this.controls.enablePan = false;
+    this.controls.enableDamping = true;
+    this.controls.dampingFactor = 0.05;
+    this.controls.enableZoom = false;
+    this.controls.autoRotate = true;
+    this.controls.update();
+    this.controls.autoRotateSpeed = 0.5;
 
-      loader.load(planetTexture, function (texture) {
-        let geometry = new THREE.SphereGeometry(200, 20, 20);
-        let material = new THREE.MeshBasicMaterial({
-          map: texture,
-          overdraw: 0.5,
-        });
-        let mesh = new THREE.Mesh(geometry, material);
-        group.add(mesh);
-      });
-
-      renderer = new THREE.WebGLRenderer();
-      renderer.setClearColor(0xffffff);
-      renderer.setPixelRatio(window.devicePixelRatio);
-      renderer.setSize(width, height);
-      container.appendChild(renderer.domElement);
-
-      // 控制地球
-      let orbitControls = new OrbitControls(camera, renderer.domElement);
-      orbitControls.autoRotate = false;
-      stats = new Stats();
-      container.appendChild(stats.dom); //增加状态信息
-    }
-
-    function animate() {
-      requestAnimationFrame(animate);
-      render();
-      stats.update();
-    }
-    function render() {
-      group.rotation.y -= 0.005; //这行可以控制地球自转
-      renderer.render(scene, camera);
-    }
+    Promise.all([
+      this.loadModel("/tower.glb").then((result) => {
+        console.log(result);
+      }),
+      new Promise((resolve) => {
+        circleInstance(this.scene, resolve);
+      }).then(() => {
+        // this.points = getCoordinates().coordinates; // continents except for artic & antartic
+        // this.pixels = getCoordinates().pixels; // continents including artic & antartic
+        // this.continents = getMesh(); // instanced mesh that holds continents
+      }),
+    ]).then(() => {
+      this.start();
+    });
   }
 
-  state = {};
+  loadModel(url) {
+    return new Promise((resolve) => {
+      new GLTFLoader().load(url, resolve);
+    });
+  }
+
+  start() {
+    console.log("start");
+    buildGlobe(this.scene);
+    this.animate();
+  }
+
+  animate() {
+    console.log("animate");
+    const renderUI = () => {
+      this.renderer.render(this.scene, this.camera);
+      this.controls.update();
+      requestAnimationFrame(renderUI);
+    };
+    renderUI();
+  }
+
   render() {
-    return <div id="WebGL-output" style={{ height: "100%" }}></div>;
+    return <div className="globe" style={{ height: "100%" }}></div>;
   }
 }
 
