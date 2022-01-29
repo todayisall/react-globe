@@ -5,6 +5,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { buildGlobe } from "../utils/utils";
 import { circleInstance, getCoordinates, getMesh } from "./instancing.js";
+import { GalaxyBackground } from "./GalaxyBackground";
 
 class Globe extends Component {
   constructor() {
@@ -47,7 +48,10 @@ class Globe extends Component {
     this.scene.add(hemiLight);
 
     // 渲染器
-    this.renderer = new THREE.WebGLRenderer();
+    this.renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+    });
     const DPR = window.devicePixelRatio ? window.devicePixelRatio : 1;
     this.renderer.setPixelRatio(DPR);
     this.renderer.setSize(this.canvas.offsetWidth, this.canvas.offsetHeight);
@@ -63,6 +67,9 @@ class Globe extends Component {
     this.controls.autoRotate = true;
     this.controls.update();
     this.controls.autoRotateSpeed = 0.5;
+
+    // 星空背景
+    this.scene.add(GalaxyBackground());
 
     Promise.all([
       this.loadModel("/tower.glb").then((result) => {
