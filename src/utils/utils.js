@@ -17,12 +17,6 @@ const buildGlobe = (scene) => {
     },
     "/glsl/",
     () => {
-      //  todo 暂时取消
-        // const globeMap = new THREE.TextureLoader().load(
-        //   "assets/images/world.jpg"
-        // );
-        // uniforms["tex"].value = globeMap;
-
       const globe = new THREE.Mesh(
         geometry,
         new THREE.MeshPhongMaterial({ color: 0x29367f })
