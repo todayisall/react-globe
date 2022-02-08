@@ -101,10 +101,7 @@ const drawCurve = (start, end) => {
   const v1 = getMid(start, sharpPt, 3);
   const v2 = getMid(end, sharpPt, 3);
   const curve = new THREE.CubicBezierCurve3(start, v1, v2, end);
-  const points = curve.getPoints(200);
-  // const geometry = new THREE.BufferGeometry().setFromPoints(points);
   let geometry = new THREE.TubeBufferGeometry(curve, 50, 0.05, 12, false);
-  let r = Math.random();
   const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
   const curveMesh = new THREE.Mesh(geometry, material);
   return curveMesh;

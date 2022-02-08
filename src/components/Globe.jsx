@@ -14,6 +14,19 @@ class Globe extends Component {
     this.points = null; // coordinates of continents except for artic & antarctic
     this.spikes = []; // array of tower & top
     this.curves = [];
+    // 上海港 & 广州港
+    this.startPoints = [
+      new THREE.Vector3(
+        -10.692053252006493,
+        12.950675234328203,
+        -18.519179469706952
+      ),
+      new THREE.Vector3(
+        -8.102352330943942,
+        9.203113817116893,
+        -21.786568861902953
+      ),
+    ];
   }
   componentDidMount() {
     this.init();
@@ -72,6 +85,10 @@ class Globe extends Component {
     var hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.4);
     this.scene.add(hemiLight);
 
+    // 辅助调试
+    // this.axesHelper = new THREE.AxesHelper(70);
+    // this.scene.add(this.axesHelper);
+
     // 渲染器
     this.renderer = new THREE.WebGLRenderer({
       antialias: true,
@@ -101,18 +118,18 @@ class Globe extends Component {
 
     window.addEventListener("resize", this.handleResize.bind(this), false);
 
-    window.addEventListener(
-      "mousemove",
-      this.handleMouseMove.bind(this),
-      false
-    );
+    // 暂时取消悬浮显示详细数据
+    // window.addEventListener(
+    //   "mousemove",
+    //   this.handleMouseMove.bind(this),
+    //   false
+    // );
 
     Promise.all([
       new Promise((resolve) => {
         circleInstance(this.scene, resolve);
       }).then(() => {
         this.points = getCoordinates().coordinates;
-        console.log("points", this.points);
       }),
     ]).then(() => {
       this.start();
@@ -194,10 +211,10 @@ class Globe extends Component {
         console.log("鼠标选中");
 
         document.getElementById("description").style.display = "block";
-        this.controls.autoRotate = false;
+        // this.controls.autoRotate = false;
         this.controls.update();
       } else {
-        this.controls.autoRotate = true;
+        // this.controls.autoRotate = true;
         this.controls.update();
       }
 
@@ -209,9 +226,11 @@ class Globe extends Component {
             this.spikes[2 * i] = { tower: null, top: null };
             this.spikes[2 * i + 1] = { tower: null, top: null };
 
-            // chooses a random start point on continents
+            // 固定 上海 和 广州为出发港口
             startPoint =
-              this.points[parseInt(this.points.length * Math.random())];
+              this.startPoints[
+                parseInt(this.startPoints.length * Math.random())
+              ];
 
             // makes start spike & top
             this.spikes[2 * i].tower = new THREE.Mesh(spikeGeo, spikeMat);

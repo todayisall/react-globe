@@ -14,7 +14,6 @@ const circleInstance = (scene, callback) => {
   img.addEventListener("load", function () {
     map.drawImage(img, 0, 0);
     const image_data = map.getImageData(0, 0, 400, 200);
-    console.log('image_data', image_data);
     for (var lat = -90; lat < 90; lat += 1.2) {
       for (var lng = -180; lng < 180; lng += 1.2) {
         var row = 400 - parseInt((lng * 400) / 360 + 200);
